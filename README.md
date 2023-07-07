@@ -1,38 +1,15 @@
 # Maze Project
 
-## Overview
+This codebase initially contains a test.c file which contains the maze project test file. 
 
-What is the project about?
+To compile:
 
-What am I using to achieve my goals
+`make build`
 
-## Implementation
+To run:
 
-Windowing 
+`make run` OR `game`
 
-Mapping
+To clean:
 
-Render 3D Display from Map
-
-Orientation
-
-Rotation
-
-Movement
-
-Collision Handling
-
-Adding Textures
-
-Features:
-	Weapons
-	Enemies
-	Make it rain
-
-Extras
-	Rain
-	Special lighting
-	Doors
-
-Coding style
-	Betty
+`make clean` 
