@@ -1,37 +1,52 @@
 #include <stdio.h>
-#include <SDL2/SDL.h>
 #include "../headers/global.h"
 
-
 /**
- * main - The entry point to our program
- * @void: Takes no parameters
+ * main - Entry point into the program
  *
- * Return: TRUE  - if succesful
- *         FALSE - if NOT successful
+ * @argv: The number of arguments the program takes on the CLI
+ * @args: An array that holds these arguments from CLI
+ *
+ * Return: (SUCCESS) on success & (FAIL) on failure
+ *
  */
 
-int main(void)
+int main(int argv, char *args[])
 {
-	game_is_running = initialize();
-
-	if (!game_is_running)
-	{
-		printf("Failed to initialize the game.\n");
-		return (FALSE);
-	}
+	int game_is_running = SUCCESS;
+	float speed = 0.05;
+	Instance instance;
+	
+	initializeSDL(&instance);
 
 	setup();
 
-	/* Game Loop */
+	SDL_Event event;
+
+	/** Game Loop */
 	while (game_is_running)
 	{
-		process_input();
-		update();
-		render();
+		while (SDL_PollEvent(&event))
+		{
+			if (event.type == SDL_QUIT)
+				game_is_running = FAIL;
+			else if (event.type == SDL_KEYDOWN)
+			{
+				SDL_Keycode keycode = event.key.keysym.sym;
+
+				if (keycode == SDLK_ESCAPE)
+					game_is_running = FAIL;
+			}
+		}
+
+
+	drawScreen();
+	castRays();
+	movePlayer(speed);
+	rotatePlayer(speed);
 	}
 
-	destroy();
+	cleanupSDL(&instance);
 
-	return (TRUE);
+	return (SUCCESS);
 }

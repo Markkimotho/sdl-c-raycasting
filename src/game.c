@@ -1,226 +1,289 @@
 #include "../headers/global.h"
 
-int map[10][10] = {
-	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 1, 0, 1, 0, 0, 1},
-	{1, 0, 0, 0, 1, 0, 1, 0, 0, 1},
-	{1, 0, 0, 0, 1, 0, 1, 0, 0, 1},
-	{1, 0, 0, 0, 1, 0, 1, 1, 1, 1},
-	{1, 0, 0, 0, 1, 0, 1, 0, 0, 1},
-	{1, 0, 1, 0, 1, 0, 1, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
-    };
+/**
+ * setup - Function that sets the player's position
+ * @void: Takes no parameter
+ *
+ * Return: None
+ *
+ */
 
-int tileSizeX = 20; 
-int tileSizeY = 20;
-
-int initialize(void)
+void setup(Player player, int map[MAP_WIDTH][MAP_HEIGHT])
 {
-	if (SDL_Init(SDL_INIT_VIDEO) != 0)
-	{
-		printf("SDL Error! SDL Could Not Initialize: %s\n", SDL_GetError());
-		return (FALSE);
-	}
-
-	window = SDL_CreateWindow("Maze Project",
-			SDL_WINDOWPOS_CENTERED,
-			SDL_WINDOWPOS_CENTERED,
-			WINDOW_WIDTH,
-			WINDOW_HEIGHT,
-			0);
-
-	if (window == NULL)
-	{
-	        printf("SDL Error! Window Could Not Be Created: %s\n", SDL_GetError());
-	        SDL_Quit();
-	        return (FALSE);
-	}	
-
-	Uint32 render_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
-	renderer = SDL_CreateRenderer(window, -1, render_flags);	
-
-	if (renderer == NULL)
-	{
-	        printf("SDL Error!: SDL Could Not Create Renderer: %s\n", SDL_GetError());
-	        SDL_DestroyWindow(window);
-	        SDL_Quit();
-	        return (FALSE);
-	}
-
-	return (TRUE);
+	player.x = 3.5;
+	player.y = 3.5;
+	player.dirX = -1.0;
+	player.dirY = 0.0;
+	player.planeX = 0.0;
+	player.planeY = 0.66;
 }
 
-void destroy()
-{	
-	SDL_DestroyRenderer(renderer);
-	SDL_DestroyWindow(window);
-	SDL_Quit();
-}
+/**
+ * drawMap - draws the 2D map on the screen
+ * @void: Takes no parameter
+ *
+ * Return: None
 
-void setup()
+ */
+
+void drawMap(Instance *instance, int map[MAP_WIDTH][MAP_HEIGHT])
 {
-	player.x = 30;
-	player.y = 30;
-}
+	/****** Draw the map ********/
+	int mapSize = WINDOW_WIDTH / 8;
+	int mapScale = mapSize / MAP_WIDTH;
 
+	SDL_Rect mapRect = {
+		WINDOW_WIDTH - mapSize,
+		0,
+		mapSize,
+		mapSize
+	};
 
-void process_input()
-{
-	SDL_Event event;
-	SDL_PollEvent(&event);
+	SDL_SetRenderDrawColor(instance->renderer, 255, 255, 255, 255);
+	SDL_RenderDrawRect(instance->renderer, &mapRect);
 
-	if (event.type == SDL_QUIT)
-	        game_is_running = FALSE;
-        
-	else if (event.type == SDL_KEYDOWN)
-        {
-		int newPlayerX = player.x;
-		int newPlayerY = player.y;
-
-	        switch (event.key.keysym.sym)
-                {
-	                case SDLK_ESCAPE:
-	                        game_is_running = FALSE;
-	                        break;
-			case SDLK_w:
-	                        newPlayerY -= 2;
-	                        break;
-			case SDLK_s:
-	                        newPlayerY += 2;
-	                        break;
-	                case SDLK_a:
-				newPlayerX -= 2;
-	                        break;
-	                case SDLK_d:
-	                        newPlayerX += 2;
-	                        break;
-	        }
-
-		//Check for collisions with the walls
-		if (map[newPlayerY / tileSizeY][newPlayerX / tileSizeX] != 1)
+	for (int x = 0; x < MAP_WIDTH; x++)
+	{
+		for (int y = 0; y < MAP_HEIGHT; y++)
 		{
-			player.x = newPlayerX;
-			player.y = newPlayerY;
+			SDL_Rect mapTileRect = {
+				WINDOW_WIDTH - mapSize + x * mapScale,
+				y * mapScale,
+				mapScale,
+				mapScale
+			};
+			if (map[x][y] == 1)
+			{
+				SDL_SetRenderDrawColor(instance->renderer, 255, 255, 255, 255);
+				SDL_RenderFillRect(instance->renderer, &mapTileRect);
+			}
+			else if (map[x][y] == 0)
+			{
+
+				SDL_SetRenderDrawColor(instance->renderer, 0, 0, 0, 255);
+				SDL_RenderFillRect(instance->renderer, &mapTileRect);
+			}
 		}
-        }
+	}
 }
 
-void drawMap()
+
+/**
+ * drawScreen - draws the 3D scene
+ * @void: Takes no parameter
+ *
+ * Return: None
+ */
+
+void drawScreen(Instance *instance, int map[MAP_WIDTH][MAP_HEIGHT])
 {
+	SDL_SetRenderDrawColor(instance->renderer, 0, 0, 0, 255);
+	SDL_RenderClear(instance->renderer);
 
-    	for (int i = 0; i < 10; i++)
-    	{
-        	for (int j = 0; j < 10; j++)
-        	{
-            		int cellX = j * tileSizeX;
-            		int cellY = i * tileSizeY;
+	/***** Draw the 3D scene ******/
 
-            	SDL_Rect cellRect = {
-                	cellX,
-                	cellY,
-                	tileSizeX,
-                	tileSizeY
-           	 };
-
-            	if (map[i][j] == 1)
-           	 {
-                	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                	SDL_RenderFillRect(renderer, &cellRect);
-           	 }
-            	else if (map[i][j] == 0)
-            	{
-                	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                	SDL_RenderFillRect(renderer, &cellRect);
-        	    }
-	
-       	 	}
-    	}
-}
-
-void drawAvatar(SDL_Renderer* renderer, int centerX, int centerY, int radius)
-{
-	int x = radius;
-	int y = 0;
-	int radiusError = 1 - x;
-
-	while (x >= y)
+	for (int x = 0; x < WINDOW_WIDTH; x++)
 	{
-		SDL_RenderDrawLine(renderer, centerX + x, centerY + y, centerX - x, centerY + y);
-		SDL_RenderDrawLine(renderer, centerX + x, centerY - y, centerX - x, centerY - y);
-		SDL_RenderDrawLine(renderer, centerX + y, centerY + x, centerX - y, centerY + x);
-		SDL_RenderDrawLine(renderer, centerX + y, centerY - x, centerX - y, centerY - x);
-		
-		y++;
-		if (radiusError < 0)
-			radiusError += 2 * y + 1;
+		for (int y = 0; y < WINDOW_HEIGHT; y++)
+		{
+			SDL_SetRenderDrawColor(renderer,
+						(screenBuffer[x][y] & 0XFF0000) >> 16,
+						(screenBuffer[x][y] & 0X00FF00) >> 8,
+						screenBuffer[x][y] & 0X0000FF,
+						255);
+			SDL_RenderDrawPoint(renderer, x, y);
+		}
+	}
+	drawMap(instance, map);
+}
+
+
+
+/**
+ * movePlayer - Moving the player forwards or backwards
+ * @deltaTime: The speed the player will move at
+ *
+ * Return: None
+ *
+ */
+
+void movePlayer(Player player, float deltaTime)
+{
+	const float moveSpeed = deltaTime * 5.0;
+	const Uint8 *keyboardState = SDL_GetKeyboardState(NULL);
+
+	float newX = player.x;
+	float newY = player.y;
+
+	if (keyboardState[SDL_SCANCODE_UP] || keyboardState[SDL_SCANCODE_W])
+	{
+		newX += player.dirX * moveSpeed;
+		newY += player.dirY * moveSpeed;
+	}
+
+	if (keyboardState[SDL_SCANCODE_DOWN] || keyboardState[SDL_SCANCODE_S])
+	{
+		newX -= player.dirX * moveSpeed;
+		newY -= player.dirY * moveSpeed;
+	}
+
+	int mapX = (int)newX;
+	int mapY = (int)newY;
+
+	if (map[mapX][mapY] == 0)
+	{
+		player.x = newX;
+		player.y = newY;
+	}
+	else
+	{
+		if (map[(int)newX][mapY] == 0)
+			player.x = newX;
+		if (map[mapX][(int)newY] == 0)
+			player.y = newY;
+	}
+}
+
+/**
+ * rotatePlayer - Rotates the player Westwards or Eastwards
+ * @void: Takes no parameter
+ *
+ * Return: None
+ */
+
+void rotatePlayer(Player player)
+{
+
+	const float rotSpeed = deltaTime * 3.0;
+	const Uint8 *keyboardState = SDL_GetKeyboardState(NULL);
+
+	if (keyboardState[SDL_SCANCODE_LEFT] || keyboardState[SDL_SCANCODE_A])
+	{
+		float oldDirX = player.dirX;
+
+		player.dirX = player.dirX * cos(rotSpeed) - player.dirY * sin(rotSpeed);
+		player.dirY = oldDirX * sin(rotSpeed) + player.dirY * cos(rotSpeed);
+
+		float oldPlaneX = player.planeX;
+
+		player.planeX = player.planeX * cos(rotSpeed) - player.planeY * sin(rotSpeed);
+		player.planeY = oldPlaneX * sin(rotSpeed) + player.planeY * cos(rotSpeed);
+	}
+
+	if (keyboardState[SDL_SCANCODE_RIGHT] || keyboardState[SDL_SCANCODE_D])
+	{
+		float oldDirX = player.dirX;
+
+		player.dirX = player.dirX * cos(-rotSpeed) - player.dirY * sin(-rotSpeed);
+		player.dirY = oldDirX * sin(-rotSpeed) + player.dirY * cos(-rotSpeed);
+
+		float oldPlaneX = player.planeX;
+
+		player.planeX = player.planeX * cos(-rotSpeed) - player.planeY * sin(-rotSpeed);
+		player.planeY = oldPlaneX * sin(-rotSpeed) + player.planeY * cos(-rotSpeed);
+
+	}
+}
+
+/**
+ * castRays - Casts the rays that will render the 3D display
+ * @void: Takes no parameter
+ *
+ * Return: None
+ */
+
+void castRays(Player player, int map[MAP_WIDTH][MAP_HEIGHT])
+{
+	for (int x = 0; x < WINDOW_WIDTH; x++)
+	{
+		float cameraX = 2 * x / (float)WINDOW_WIDTH - 1;
+		float rayDirX = player.dirX + player.planeX * cameraX;
+		float rayDirY = player.dirY + player.planeY * cameraX;
+
+		int mapX = (int)player.x;
+		int mapY = (int)player.y;
+
+		float sideDistX;
+		float sideDistY;
+
+		float deltaDistX = fabs(1 / rayDirX);
+		float deltaDistY = fabs(1 / rayDirY);
+		float perpWallDist;
+
+		int stepX;
+		int stepY;
+
+		int hit = 0;
+		int side;
+
+		if (rayDirX < 0)
+		{
+			stepX = -1;
+			sideDistX = (player.x - mapX) * deltaDistX;
+		}
 		else
 		{
-			x--;
-			radiusError += 2 * (y - x) + 1;
+			stepX = 1;
+			sideDistX = (mapX + 1.0 - player.x) * deltaDistX;
 		}
 
+		if (rayDirY < 0)
+		{
+			stepY = -1;
+			sideDistY = (player.y - mapY) * deltaDistY;
+		}
+		else
+		{
+			stepY = 1;
+			sideDistY = (mapY + 1.0 - player.y) * deltaDistY;
+		}
+
+		while (!hit)
+		{
+			if (sideDistX < sideDistY)
+			{
+				sideDistX += deltaDistX;
+				mapX += stepX;
+				side = 0;
+			}
+			else
+			{
+				sideDistY += deltaDistY;
+				mapY += stepY;
+				side = 1;
+			}
+
+			if (map[mapX][mapY] > 0)
+				hit = 1;
+		}
+
+		if (side == 0)
+			perpWallDist = (mapX - player.x + (1 - stepX) / 2) / rayDirX;
+		else
+			perpWallDist = (mapY - player.y + (1 - stepY) / 2) / rayDirY;
+
+		int lineHeight = (int)(WINDOW_HEIGHT / perpWallDist);
+
+		int drawStart = -lineHeight / 2 + WINDOW_HEIGHT / 2;
+
+		if (drawStart < 0)
+			drawStart = 0;
+
+		int drawEnd = lineHeight / 2 + WINDOW_HEIGHT / 2;
+
+		if (drawEnd >= WINDOW_HEIGHT)
+			drawEnd = WINDOW_HEIGHT - 1;
+
+		Uint32 wallColor = (side == 1) ? 0xFF0000FF : 0x0000FFFF;
+
+		for (int y = 0; y < drawStart; y++)
+		screenBuffer[x][y] = 0x000000;
+
+		for (int y = drawStart; y <= drawEnd; y++)
+			screenBuffer[x][y] = wallColor;
+
+		for (int y = drawEnd + 1; y < WINDOW_HEIGHT; y++)
+			screenBuffer[x][y] = 0x808080;
 	}
-}
-
-void drawRay(SDL_Renderer *renderer, int startX, int startY, int endX, int endY)
-{
-	startX = player.x;
-	startY = player.y;
-
-	endX = FALSE;
-	endY = FALSE;
-
 
 }
-
-void render()
-{
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
-
-        drawMap();
-
-     	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-
-	int centerX = player.x;
-	int centerY = player.y;
-	int radius = 2;
-
-	drawAvatar(renderer, centerX, centerY, radius);
-
-        SDL_RenderPresent(renderer);
-}
-
-void update()
-{
-        //TODO: Updating the game
-}
-
-
-int main(void)
-{
-	game_is_running = initialize();
-
-	if (!game_is_running)
-	{
-		printf("Failed to initialize the game.\n");
-		return (FALSE);
-	}
-
-	setup();
-
-	/* Game Loop */
-	while (game_is_running)
-	{
-		process_input();
-		update();
-		render();
-	}
-
-	destroy();
-
-	return (TRUE);
-}
-

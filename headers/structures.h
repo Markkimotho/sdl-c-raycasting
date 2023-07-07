@@ -1,33 +1,44 @@
 #ifndef _STRUCTURES_H_
 #define _STRUCTURES_H_
 
-
 /**
- * struct Vector2D - Defines an (x, y) point on the window
- * @x: x coordinate
- * @y: y coordinate
+ * struct Player - Structure to represent a player position and direction
+ * @x: (x) position of player on the 2D map
+ * @y: (y) position of player on the 2D map
+ * @dirX: (x) facing direction of player
+ * @dirY: (y) facing direction of player
+ * @planeX: (x) plane
+ * @planeY: (y) plane
  *
  */
-typedef struct Vector2D
+
+typedef struct Player
 {
 	float x;
 	float y;
-} Vector2D;
+	float dirX;
+	float dirY;
+	float planeX;
+	float planeY;
+} Player;
 
 /**
- * struct Player - Defines a player's position, direction
- * 	           & angle they are facing;
- * @pos: Position of player
- * @dir: Direction player is facing
- * @angle: Angle player is facing
+ * struct Init
+ *
+ *
+ *
  *
  */
-typedef struct Player
+
+typedef struct Instance
 {
-	Vector2D pos;
-	Vector2D dir;
-	float angle;
-} Player;
+	SDL_Window *window;
+	SDL_Renderer *renderer;
+} Instance;
+
+
+int initializeSDL(Instance *instance);
+void cleanupSDL(Instance *instance);
 
 
 #endif

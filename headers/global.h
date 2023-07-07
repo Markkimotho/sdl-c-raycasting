@@ -4,31 +4,41 @@
 #include <SDL2/SDL.h>
 #include "structures.h"
 
-#define TRUE 1
-#define FALSE 0
-
-#define WINDOW_WIDTH 1260
+#define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
-#define MAP_WIDTH 30
-#define MAP_HEIGHT 30
+#define MAP_WIDTH 16
+#define MAP_HEIGHT 16
+#define NUM_RAYS WINDOW_WIDTH
+#define FAIL 1
+#define SUCCESS 0
 
-#define FPS 30
-#define FRAME_TARGET_TIME (1000 / FPS)
+int map[MAP_WIDTH][MAP_HEIGHT] = {
+	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+	{1,0,0,0,1,1,1,1,1,1,1,0,0,0,0,1},
+	{1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,1,1,1,1,1,1,1,1,1,1,0,1},
+	{1,0,0,0,0,0,1,0,0,1,0,0,0,1,0,1},
+	{1,0,0,0,0,0,1,0,0,1,0,0,0,1,0,1},
+	{1,0,0,0,0,0,1,0,0,1,0,0,0,1,0,1},
+	{1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1},
+	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+};
 
-Vector2D player;
-int game_is_running = FALSE;
-SDL_Window *window = NULL;
-SDL_Renderer *renderer = NULL;
+int screenBuffer[WINDOW_WIDTH][NUM_RAYS];
 
-
-/*********** Function Prototypes **************/
-int initialize(void);
-void destroy(void);
-void setup(void);
-void process_input(void);
-void drawMap(void);
-void drawAvatar(SDL_Renderer* renderer, int centerX, int centerY, int radius);
-void render(void);
-void update(void);
+/***** PROTOTYPES *****/
+void setup(Player *player, int map[MAP_WIDTH][MAP_HEIGHT]);
+void drawMap(Instance *instance, int map[MAP_WIDTH][MAP_HEIGHT]);
+void drawScreen(Instance *instance, int map[MAP_WIDTH][MAP_HEIGHT]);
+void movePlayer(Player *player, float deltaTime);
+void rotatePlayer(Player *player, float deltaTime);
+void castRays(Player *player, int map[MAP_WIDTH][MAP_HEIGHT]);
 
 #endif
