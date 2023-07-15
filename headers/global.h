@@ -2,6 +2,8 @@
 #define _GLOBAL_H_
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <math.h>
 #include "structures.h"
 
 #define WINDOW_WIDTH 1280
@@ -9,6 +11,7 @@
 #define MAP_WIDTH 16
 #define MAP_HEIGHT 16
 #define NUM_RAYS WINDOW_WIDTH
+#define NUM_TEXTURES 2
 #define FAIL 1
 #define SUCCESS 0
 

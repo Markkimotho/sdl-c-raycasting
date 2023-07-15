@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Retro Raycasting Engine</title>
+  <style>
+    body {
+      width: 1000px;
+      font-family: 'Courier New', monospace;
+      background-color: #000000;
+      color: #ffffff;
+      text-align: center;
+      margin: 0 auto;
+      padding: 0;
+    }
+    
+    header {
+      background-color: #000000;
+      padding: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header img {
+      width: 200px;
+    }
+    
+    h1 {
+      font-size: 40px;
+      margin-top: 50px;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+    }
+    
+    button {
+      cursor: pointer;
+      background-color: #d01919;
+      color: #ffffff;
+      font-size: 24px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.3s ease;
+      font-family: 'Courier New', monospace;
+    }
+
+    button:hover {
+      background-color: #b00b0b;
+    }
+    
+    p {
+      font-size: 28px;
+      margin-bottom: 80px;
+    }
+    
+    #video-container {
+      max-width: 800px;
+      margin: 0 auto;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+      margin-bottom: 80px;
+    }
+    
+    .feature {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      margin-bottom: 80px;
+    }
+    
+    .feature img {
+      max-width: 400px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+    
+    nav a {
+      color: aqua;
+      margin: 10px;
+    }
+    
+    .about {
+      max-width: 600px;
+      margin: 0 auto;
+      margin-bottom: 80px;
+    }
+    
+    .about p {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    
+    .about a {
+      color: aqua;
+      text-decoration: underline;
+    }
+    
+    ul {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      list-style-type: none;
+    }
+    
+    li a {
+      margin-left: 20px;
+      color: aqua;
+    }
+
+    footer {
+      font-size: 14px;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Intro Section -->
+  <header>
+    <img src="assets/retro-computer-desk-arrangement.jpg" alt="Cover Image" width="800">
+    <figcaption> Image by <a href="https://www.freepik.com/free-photo/retro-computer-desk-arrangement_37350452.htm#from_view=detail_serie">Freepik</a></figcaption>
+    
+    <h1>Retro Raycasting Engine</h1>
+    <p>Raycasting engine built in C and SDL2</p>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#about">About</a>
+    </nav>
+    <a href="https://github.com/Markkimotho/sdl-c-raycasting" target="_blank" rel="noopener noreferrer">
+      <br>
+      <button>Try It Out</button>
+    </a>
+  </header>
+  
+  <!-- Video Container -->
+  <div id="video-container">
+    <iframe width="800" height="450" src="https://www.youtube.com/embed/YOUR_VIDEO_ID" frameborder="0" allowfullscreen></iframe>
+  </div>
+  
+  <!-- Feature Section -->
+  <section id="features">
+    <div class="feature">
+      <h2>Features<h2>
+      <img src="assets/maze.png" alt="Feature 1" width="400">
+      <h2>Realistic Rendering</h2>
+      <p>A Stunning and Realistic 3D environment is created using raycasting techniques.</p>
+    </div>
+    <div class="feature">
+      <img src="assets/Peek 2.gif" alt="Feature 2" width="400">
+      <h2>Collision Handling</h2>
+      <p>Just like a person can't walk through walls in real life, the player cannot go through walls.</p>
+    </div>
+    <div class="feature">
+      <img src="assets/map.png" alt="Feature 3" width="400">
+      <h2>Mapping</h2>
+      <p>A map outline of the maze is implemented that acts as a guide for the player (so the player is not completely.</p>
+    </div>
+    <div class="feature">
+      <img src="assets/Peek.gif" alt="Feature 4" width="400">
+      <h2>Efficient Performance</h2>
+      <p>Optimized algorithms ensure smooth and efficient rendering and movement even on lower-end systems.</p>
+    </div>
+    <div class="feature">
+      <img src="assets/textures_maze.png" alt="Feature 1" width="400">
+      <h2>Wall Texturing</h2>
+      <p>The walls of the maze are coated with imported textures to create some illusion of realism.</p>
+    </div>
+  </section>
+  
+  <!-- About Section -->
+  <section id="about">
+    <div class="about">
+      <h2>About</h2>
+      <p>Hi, I'm Mark Tinega, the developer behind the Retro Raycasting Engine. This project was inspired by my fascination with the classic first-person shooter games of the past, and my desire to understand the inner workings of their graphics engines.</p>
+      <p>I used this as an opportunity to work on my C programming skills coupled with some math.</p>
+      <p>This project is part of my portfolio for Holberton School, where I'm honing my skills as a software engineer. You can find the complete source code on <a href="https://github.com/Markkimotho/sdl-c-raycasting" target="_blank" rel="noopener noreferrer">GitHub</a>. You are open to contribute and send me recommendations on how I can improve this engine.</p>
+      <p>This is a work in progress, and more features and improvements will be added over time.</p>
+    </div>
+    <div class="team-members">
+      <footer>
+        <article>&copy; Mark Tinega</article>
+      </footer>
+      <ul>
+        <li><a href="https://www.linkedin.com/in/mark-tinega/" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+        <li><a href="https://github.com/Markkimotho" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        <li><a href="https://ktinega.substack.com/" target="_blank" rel="noopener noreferrer">Substack</a></li>
+      </ul>
+    </div>
+  </section>
+</body>
+</html>

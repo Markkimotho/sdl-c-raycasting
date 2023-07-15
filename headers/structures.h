@@ -23,10 +23,9 @@ typedef struct Player
 } Player;
 
 /**
- * struct Init
- *
- *
- *
+ * struct Instance - An SDL2 instance
+ * @window: for creating an SDL window
+ * @renderer: for performing object rendering on SDL2 window
  *
  */
 
