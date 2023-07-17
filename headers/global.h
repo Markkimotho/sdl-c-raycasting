@@ -10,8 +10,7 @@
 #define WINDOW_HEIGHT 720
 #define MAP_WIDTH 16
 #define MAP_HEIGHT 16
-#define NUM_RAYS WINDOW_WIDTH
-#define NUM_TEXTURES 2
+#define NUM_RAYS WINDOW_WIDTH / 2
 #define FAIL 1
 #define SUCCESS 0
 

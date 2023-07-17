@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include "../headers/global.h"
 
+
+
+
 /**
  * main - Entry point into the program
  *
@@ -18,6 +21,7 @@ int main(int argv, char *args[])
 	Instance instance;
 	
 	initializeSDL(&instance);
+	loadTextures();
 
 	setup();
 
@@ -45,8 +49,27 @@ int main(int argv, char *args[])
 	movePlayer(speed);
 	rotatePlayer(speed);
 	}
-
+	
+	destroyTextures();
 	cleanupSDL(&instance);
 
 	return (SUCCESS);
+}
+
+/**
+ * setup - Function that sets the player's position
+ * @void: Takes no parameter
+ *
+ * Return: None
+ *
+ */
+
+void setup(Player *player, int map[MAP_WIDTH][MAP_HEIGHT])
+{
+	player->x = 3.5;
+	player->y = 3.5;
+	player->dirX = -1.0;
+	player->dirY = 0.0;
+	player->planeX = 0.0;
+	player->planeY = 0.66;
 }

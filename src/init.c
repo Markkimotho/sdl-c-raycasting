@@ -19,7 +19,7 @@ int initializeSDL(Instance *instance)
 		return (FAIL);
 	}
 
-	instance->window = SDL_CreateWindow("Maze",
+	instance->window = SDL_CreateWindow("Raycasting engine",
 				SDL_WINDOWPOS_CENTERED,
 				SDL_WINDOWPOS_CENTERED,
 				WINDOW_WIDTH,

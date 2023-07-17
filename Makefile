@@ -1,5 +1,5 @@
 build:
-	gcc test.c -o game -lSDL2 -lm
+	gcc *.c -o game -lSDL2 -lm -lSDL2_image
 
 run:
 	./game

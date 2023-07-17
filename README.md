@@ -1,6 +1,6 @@
 # Maze Project
 
-This codebase initially contains a test.c file which contains the maze project test file. 
+This codebase initially contains the maze project files. 
 
 To compile:
 
@@ -8,8 +8,8 @@ To compile:
 
 To run:
 
-`make run` OR `game`
+`./game` or `make run`
 
-To clean:
+To clean and remove the executable file:
 
 `make clean` 

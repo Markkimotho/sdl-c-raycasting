@@ -33,6 +33,7 @@ typedef struct Instance
 {
 	SDL_Window *window;
 	SDL_Renderer *renderer;
+	SDL_Texture* wallTexture;
 } Instance;
 
 
