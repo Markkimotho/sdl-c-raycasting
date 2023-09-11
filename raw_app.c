@@ -23,6 +23,12 @@ SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 SDL_Texture* wallTexture = NULL;
 
+/**
+ * initializeSDL - initializes SDL window and renderer
+ *
+ * Return: None
+ *
+ */
 void initializeSDL()
 {
         if (SDL_Init(SDL_INIT_VIDEO) != 0)
@@ -54,6 +60,12 @@ void initializeSDL()
         }
 }
 
+/**
+ * cleanupSDL - frees up resources from SDL
+ *
+ * Return: None
+ *
+ */
 void cleanupSDL()
 {
         SDL_DestroyRenderer(renderer);
@@ -61,7 +73,17 @@ void cleanupSDL()
         SDL_Quit();
 }
 
-typedef struct
+/**
+ * Player - A structure that defines a player's position on the maze
+ * @x: X-position on the maze
+ * @y: Y-position on the maze
+ * @dirX: The X-direction the player is facing
+ * @dirY: The Y-direction the player is facing
+ * @planeX: The X-plane the player is facing
+ * @planeY: The Y-plane the player is facing
+ *
+ */
+typedef struct Player
 {
         float x;
         float y;
@@ -92,7 +114,12 @@ int map[MAP_WIDTH][MAP_HEIGHT] = {
         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
 
-
+/**
+ * loadTextures - Loads the texture that we are rendering
+ * 
+ * Return: None
+ *
+ */
 void loadTextures()
 {
         SDL_Surface* surface = IMG_Load("assets/colorstone.png");
@@ -105,6 +132,11 @@ void loadTextures()
 
 }
 
+/**
+ * destroyTextures - Cleans up the texture resources
+ *
+ * Return: None
+ */
 void destroyTextures()
 {
         if (wallTexture)
@@ -115,6 +147,12 @@ void destroyTextures()
 
 }
 
+/**
+ * castRays - Performs the raycasting and rendering of the 3D scene
+ * 
+ * Return: None
+ *
+ */
 void castRays()
 {
         for (int x = 0; x < WINDOW_WIDTH; x++)
@@ -224,6 +262,14 @@ void castRays()
 
 }
 
+/*
+ * movePlayer - Performs forward and backward movement of the player
+ * 
+ * @deltaTime: Speed of player movement
+ * 
+ * Return: None
+ *
+ */
 void movePlayer(float deltaTime)
 {
         const float moveSpeed = deltaTime * 5.0;
@@ -264,6 +310,15 @@ void movePlayer(float deltaTime)
         rotatePlayer(deltaTime);
 }
 
+
+/**
+ * rotatePlayer - Performs left or right rotation
+ *
+ * @deltaTime: Speed of player rotation
+ *
+ * Return: None
+ *
+ */
 void rotatePlayer(float deltaTime)
 {
         const float rotSpeed = deltaTime * 3.0;
@@ -291,6 +346,12 @@ void rotatePlayer(float deltaTime)
         }
 }
 
+/**
+ * drawMap - Draws the 2D map on the screen
+ * 
+ * Return: None
+ *
+ */
 void drawMap()
 {
         int miniMapSize = WINDOW_WIDTH / 6;
@@ -344,6 +405,12 @@ void drawMap()
         SDL_RenderPresent(renderer);
 }
 
+/**
+ * drawScreen - For rendering objects of the screen
+ *
+ * Return: None 
+ *
+ */
 void drawScreen()
 {
         // Draw sky (ceiling)
@@ -363,6 +430,15 @@ void drawScreen()
 }
 
 
+/**
+ * main - Entry point to our program
+ * 
+ * @argc: The number of CLI arguments 
+ * @argv: An array containing the CLI arguments
+ *
+ * Return: 0 if succesful; 1 if not
+ *
+ */
 int main(int argc, char* args[])
 {
         initializeSDL();
