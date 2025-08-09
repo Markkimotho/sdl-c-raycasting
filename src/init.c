@@ -1,63 +1,57 @@
-#include <SDL2/SDL.h>
+#include "SDL2/SDL.h"
+#include "SDL2/SDL_image.h"
 #include <stdio.h>
 #include "../headers/structures.h"
 #include "../headers/global.h"
 
-/**
- * initializeSDL - Initializes SDL; Starts up a window, & renderer
- *
- * @instance: SDL instance
- *
- * Return: (0) on success & (1) on failure
- */
-
 int initializeSDL(Instance *instance)
 {
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
-	{
-		printf("SDL ERROR! SDL could not initilize: %s\n", SDL_GetError());
-		return (FAIL);
-	}
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
+        fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
+        return -1;
+    }
 
-	instance->window = SDL_CreateWindow("Raycasting engine",
-				SDL_WINDOWPOS_CENTERED,
-				SDL_WINDOWPOS_CENTERED,
-				WINDOW_WIDTH,
-				WINDOW_HEIGHT,
-				0);
-	if (instance->window == NULL)
-	{
-		printf("SDL ERROR! SDL could not create window: %s\n", SDL_GetError());
-		SDL_Quit();
-		return (FAIL);
-	}
+    int imgFlags = IMG_INIT_PNG;
+    if (!(IMG_Init(imgFlags) & imgFlags)) {
+        fprintf(stderr, "IMG_Init failed: %s\n", IMG_GetError());
+        SDL_Quit();
+        return -1;
+    }
 
-	Uint32 render_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
+    instance->window = SDL_CreateWindow("Raycasting Engine",
+                        SDL_WINDOWPOS_CENTERED,
+                        SDL_WINDOWPOS_CENTERED,
+                        WINDOW_WIDTH,
+                        WINDOW_HEIGHT,
+                        0);
+    if (!instance->window) {
+        fprintf(stderr, "SDL_CreateWindow failed: %s\n", SDL_GetError());
+        IMG_Quit();
+        SDL_Quit();
+        return -1;
+    }
 
-	instance->renderer = SDL_CreateRenderer(instance->window, -1, render_flags);
+    instance->renderer = SDL_CreateRenderer(instance->window, -1, SDL_RENDERER_ACCELERATED);
+    if (!instance->renderer) {
+        fprintf(stderr, "SDL_CreateRenderer failed: %s\n", SDL_GetError());
+        SDL_DestroyWindow(instance->window);
+        IMG_Quit();
+        SDL_Quit();
+        return -1;
+    }
 
-	if (instance->renderer == NULL)
-	{
-		printf("SDL ERROR! SDL could not create renderer: %s\n", SDL_GetError());
-		SDL_DestroyWindow(instance->window);
-		SDL_Quit();
-		return (FAIL);
-	}
-
-	return (SUCCESS);
+    instance->wallTexture = NULL;
+    return 0;
 }
-
-/**
- * cleanupSDL - It cleans up resources befores exiting
- *
- * @instance: SDL instance
- *
- * Return: Nothing
- */
 
 void cleanupSDL(Instance *instance)
 {
-	SDL_DestroyRenderer(instance->renderer);
-	SDL_DestroyWindow(instance->window);
-	SDL_Quit();
+    if (instance->wallTexture) {
+        SDL_DestroyTexture(instance->wallTexture);
+        instance->wallTexture = NULL;
+    }
+    if (instance->renderer) SDL_DestroyRenderer(instance->renderer);
+    if (instance->window) SDL_DestroyWindow(instance->window);
+    IMG_Quit();
+    SDL_Quit();
 }
