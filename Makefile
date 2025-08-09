@@ -1,23 +1,8 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -Iheaders $(shell pkg-config --cflags sdl2 SDL2_image)
-LDFLAGS = $(shell pkg-config --libs sdl2 SDL2_image) -lm
+build:
+	gcc *.c -o game -lSDL2 -lm -lSDL2_image
 
-SRCS = src/main.c src/init.c src/textures.c
-OBJS = $(SRCS:.c=.o)
-TARGET = game
-
-all: $(TARGET)
-
-$(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
-
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-run: $(TARGET)
-	./$(TARGET)
+run:
+	./game
 
 clean:
-	rm -f $(OBJS) $(TARGET)
-
-.PHONY: all run clean
+	rm -rf game

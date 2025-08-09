@@ -1,45 +1,46 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <math.h>
 #include "structures.h"
 
-#define WINDOW_WIDTH 1480
-#define WINDOW_HEIGHT 820
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 720
 #define MAP_WIDTH 16
 #define MAP_HEIGHT 16
+#define NUM_RAYS WINDOW_WIDTH / 2
+#define FAIL 1
+#define SUCCESS 0
 
-/* map is [row][col] => map[y][x] */
-static const int map[MAP_HEIGHT][MAP_WIDTH] = {
-    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,1,0,1,1,1,1,1,1,1,1,1,0,0,1},
-    {1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,0,0,1,1,1,0,1,1,1,0,1,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+int map[MAP_WIDTH][MAP_HEIGHT] = {
+	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+	{1,0,0,0,1,1,1,1,1,1,1,0,0,0,0,1},
+	{1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,1,1,1,1,1,1,1,1,1,1,0,1},
+	{1,0,0,0,0,0,1,0,0,1,0,0,0,1,0,1},
+	{1,0,0,0,0,0,1,0,0,1,0,0,0,1,0,1},
+	{1,0,0,0,0,0,1,0,0,1,0,0,0,1,0,1},
+	{1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1},
+	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
 
-extern int screenBuffer[WINDOW_WIDTH][WINDOW_HEIGHT]; /* optional */
+int screenBuffer[WINDOW_WIDTH][NUM_RAYS];
 
-void drawMap(Instance *instance, Player *player);
-void castRays(Instance *instance, Player *player);
-void drawScreen(Instance *instance, Player *player);
+/***** PROTOTYPES *****/
+void setup(Player *player, int map[MAP_WIDTH][MAP_HEIGHT]);
+void drawMap(Instance *instance, int map[MAP_WIDTH][MAP_HEIGHT]);
+void drawScreen(Instance *instance, int map[MAP_WIDTH][MAP_HEIGHT]);
 void movePlayer(Player *player, float deltaTime);
 void rotatePlayer(Player *player, float deltaTime);
+void castRays(Player *player, int map[MAP_WIDTH][MAP_HEIGHT]);
 
-/* --- Prototypes for init/textures (added) --- */
-int initializeSDL(Instance *instance);
-void cleanupSDL(Instance *instance);
-int loadTextures(Instance *instance);
-void destroyTextures(Instance *instance);
-
-#endif /* _GLOBAL_H_ */
+#endif
