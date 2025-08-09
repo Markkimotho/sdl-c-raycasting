@@ -1,10 +1,12 @@
-# Doom-Style Raycasting Engine
+# Wolfenstein 3D Raycasting Engine
 
-A lightweight C-based raycasting engine inspired by the classic *DOOM*, built with **SDL2** and **SDL2\_image**.
+A lightweight C-based raycasting engine inspired by the classic *Wolfenstein 3D*, built with **SDL2** and **SDL2\_image**.
+
+![Gameplay Preview](assets/Peek%202.gif)
 
 ## ✨ Features
 
-* Doom-style 3D rendering
+* Wolfenstein 3D rendering
 * Map drawing with textured walls
 * Basic movement & camera rotation
 * Configurable window size

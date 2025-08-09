@@ -5,7 +5,7 @@
 
 int loadTextures(Instance *instance)
 {
-    SDL_Surface *surf = IMG_Load("assets/colorstone.png");
+    SDL_Surface *surf = IMG_Load("assets/wall2.png");
     if (!surf) {
         fprintf(stderr, "IMG_Load failed: %s\n", IMG_GetError());
         return -1;
