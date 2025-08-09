@@ -40,16 +40,13 @@ int initializeSDL(Instance *instance)
         return -1;
     }
 
-    instance->wallTexture = NULL;
+    // No single wallTexture pointer here
     return 0;
 }
 
 void cleanupSDL(Instance *instance)
 {
-    if (instance->wallTexture) {
-        SDL_DestroyTexture(instance->wallTexture);
-        instance->wallTexture = NULL;
-    }
+    // Textures are cleaned up in destroyTextures(), so do not do it here
     if (instance->renderer) SDL_DestroyRenderer(instance->renderer);
     if (instance->window) SDL_DestroyWindow(instance->window);
     IMG_Quit();

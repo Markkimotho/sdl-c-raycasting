@@ -12,34 +12,36 @@
 static const int map[MAP_HEIGHT][MAP_WIDTH] = {
     {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,1,0,1,1,1,1,1,1,1,1,1,0,0,1},
-    {1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1},
-    {1,0,0,0,1,1,1,0,1,1,1,0,1,0,0,1},
+    {1,0,2,0,3,3,3,3,3,3,3,3,3,0,0,1},
+    {1,0,2,0,4,0,0,0,0,0,0,0,0,0,0,1},
+    {1,0,2,0,4,0,5,0,5,0,5,0,5,0,0,1},
+    {1,0,2,0,4,0,5,0,5,0,5,0,5,0,0,1},
+    {1,0,2,0,4,0,5,0,5,0,5,0,5,0,0,1},
+    {1,0,2,0,4,0,5,0,5,0,5,0,5,0,0,1},
+    {1,0,2,0,4,0,5,0,5,0,5,0,5,0,0,1},
+    {1,0,2,0,4,0,5,0,5,0,5,0,5,0,0,1},
+    {1,0,2,0,4,0,5,0,5,0,5,0,5,0,0,1},
+    {1,0,2,0,4,0,5,0,5,0,5,0,5,0,0,1},
+    {1,0,2,0,4,0,5,0,5,0,5,0,5,0,0,1},
+    {1,0,0,0,3,3,3,0,4,4,4,0,5,0,0,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
     {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
 
-extern int screenBuffer[WINDOW_WIDTH][WINDOW_HEIGHT]; /* optional */
+extern int screenBuffer[WINDOW_WIDTH][WINDOW_HEIGHT];
 
 void drawMap(Instance *instance, Player *player);
 void castRays(Instance *instance, Player *player);
 void drawScreen(Instance *instance, Player *player);
-void movePlayer(Player *player, float deltaTime);
-void rotatePlayer(Player *player, float deltaTime);
+void movePlayer(Player *player, const Uint8 *keystate, float deltaTime);
+void rotatePlayer(Player *player, const Uint8 *keystate, float deltaTime);
 
-/* --- Prototypes for init/textures (added) --- */
+
+/* --- Prototypes for init/textures --- */
 int initializeSDL(Instance *instance);
 void cleanupSDL(Instance *instance);
 int loadTextures(Instance *instance);
 void destroyTextures(Instance *instance);
+// int loadSprites(Instance *instance);
 
 #endif /* _GLOBAL_H_ */
