@@ -4,7 +4,7 @@ A lightweight C-based raycasting engine inspired by the classic *Wolfenstein 3D*
 
 ![Gameplay Preview](assets/Peek%202.gif)
 
-## ✨ Features
+## Features
 
 * Wolfenstein 3D rendering
 * Map drawing with textured walls
@@ -12,7 +12,39 @@ A lightweight C-based raycasting engine inspired by the classic *Wolfenstein 3D*
 * Configurable window size
 * Proper cleanup on exit (frees textures, destroys renderer/window, calls `SDL_Quit()`)
 
-## 📦 Requirements
+## Requirements
+
+Make sure you have:
+
+* **SDL2**
+* **SDL2\_image**
+* **gcc** (or any C compiler)
+
+**Ubuntu/Debian:**
+
+```bash
+sudo apt install libsdl2-dev libsdl2-image-dev
+```
+
+**macOS (Homebrew):**
+
+```bash
+````markdown
+# Wolfenstein 3D Raycasting Engine
+
+A lightweight C-based raycasting engine inspired by the classic *Wolfenstein 3D*, built with **SDL2** and **SDL2\_image**.
+
+![Gameplay Preview](assets/Peek%202.gif)
+
+## Features
+
+* Wolfenstein 3D rendering
+* Map drawing with textured walls
+* Basic movement & camera rotation
+* Configurable window size
+* Proper cleanup on exit (frees textures, destroys renderer/window, calls `SDL_Quit()`)
+
+## Requirements
 
 Make sure you have:
 
@@ -44,7 +76,7 @@ make
 ./game
 ```
 
-## 🎮 Controls
+## Controls
 
 | Key   | Action                  |
 | ----- | ----------------------- |
@@ -52,7 +84,7 @@ make
 | A / D | Rotate left / right     |
 | ESC   | Exit game               |
 
-## 🧹 Cleanup Stage
+## Cleanup Stage
 
 When you quit the game, it:
 
@@ -60,7 +92,7 @@ When you quit the game, it:
 * Destroys the SDL renderer and window
 * Calls `SDL_Quit()` to release resources
 
-## 🛠 Troubleshooting
+## Troubleshooting
 
 * **`SDL2/SDL.h: No such file or directory`**
   → Install SDL2 and SDL2\_image, then check include paths. On macOS, you may need:
@@ -72,3 +104,9 @@ When you quit the game, it:
   → Ensure shared functions are declared in headers with `extern` and defined in exactly **one** `.c` file.
 
 ---
+
+## License
+
+This project is released under the MIT License — see the `LICENSE` file for details. You are free to study, modify, and reuse the code in your own projects, including for teaching and commercial use, provided you include the copyright and license notice.
+
+````
