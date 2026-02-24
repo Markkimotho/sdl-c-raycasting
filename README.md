@@ -30,13 +30,13 @@ sudo apt install libsdl2-dev libsdl2-image-dev
 ```bash
 brew install sdl2 sdl2_image
 ```
-## 🧹 Clean object files
+## Clean object files
 
 ```bash
 make clean
 ```
 
-## 🚀 Build & Run
+## Build & Run
 
 ```bash
 make
@@ -75,5 +75,3 @@ When you quit the game, it:
 ## License
 
 This project is released under the MIT License — see the `LICENSE` file for details. You are free to study, modify, and reuse the code in your own projects, including for teaching and commercial use, provided you include the copyright and license notice.
-
-````
