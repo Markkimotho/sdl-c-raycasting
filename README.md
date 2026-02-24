@@ -25,38 +25,6 @@ Make sure you have:
 ```bash
 sudo apt install libsdl2-dev libsdl2-image-dev
 ```
-
-**macOS (Homebrew):**
-
-```bash
-# Wolfenstein 3D Raycasting Engine
-
-A lightweight C-based raycasting engine inspired by the classic *Wolfenstein 3D*, built with **SDL2** and **SDL2\_image**.
-
-![Gameplay Preview](assets/Peek%202.gif)
-
-## Features
-
-* Wolfenstein 3D rendering
-* Map drawing with textured walls
-* Basic movement & camera rotation
-* Configurable window size
-* Proper cleanup on exit (frees textures, destroys renderer/window, calls `SDL_Quit()`)
-
-## Requirements
-
-Make sure you have:
-
-* **SDL2**
-* **SDL2\_image**
-* **gcc** (or any C compiler)
-
-**Ubuntu/Debian:**
-
-```bash
-sudo apt install libsdl2-dev libsdl2-image-dev
-```
-
 **macOS (Homebrew):**
 
 ```bash
