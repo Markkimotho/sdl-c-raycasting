@@ -29,7 +29,6 @@ sudo apt install libsdl2-dev libsdl2-image-dev
 **macOS (Homebrew):**
 
 ```bash
-````markdown
 # Wolfenstein 3D Raycasting Engine
 
 A lightweight C-based raycasting engine inspired by the classic *Wolfenstein 3D*, built with **SDL2** and **SDL2\_image**.
