@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 #include "SDL2/SDL.h"
 #include "../headers/structures.h"
 #include "../headers/global.h"
@@ -8,14 +9,138 @@
 #define MOVE_SPEED 5.0f
 #define ROT_SPEED 3.0f
 
+/* Global mutable map (copied from selected preset) */
+int map[MAP_HEIGHT][MAP_WIDTH];
+
 int screenBuffer[WINDOW_WIDTH][WINDOW_HEIGHT]; /* legacy / fallback */
+
+/* ===== Robustness Helper Functions ===== */
+
+/**
+ * Check if a position is within map bounds and walkable
+ */
+static int isWalkablePosition(float x, float y) {
+    int mapX = (int)x;
+    int mapY = (int)y;
+    
+    if (mapX < 0 || mapX >= MAP_WIDTH || mapY < 0 || mapY >= MAP_HEIGHT) {
+        return 0;
+    }
+    return map[mapY][mapX] == 0;
+}
+
+/**
+ * Check if a position is safe (account for collision buffer)
+ */
+static int isSafePosition(float x, float y) {
+    /* Check center and diagonal corners for more flexible but safe collision detection */
+    return isWalkablePosition(x, y) && 
+           isWalkablePosition(x + PLAYER_COLLISION_BUFFER, y + PLAYER_COLLISION_BUFFER) &&
+           isWalkablePosition(x - PLAYER_COLLISION_BUFFER, y - PLAYER_COLLISION_BUFFER);
+}
+
+/**
+ * Copy map from preset into mutable global map
+ */
+static void loadMapPreset(int mapIndex) {
+    if (mapIndex < 0 || mapIndex >= NUM_MAPS) {
+        fprintf(stderr, "Error: Invalid map index %d\n", mapIndex);
+        return;
+    }
+    memcpy(map, mapOptions[mapIndex].layout, sizeof(map));
+}
+
+/**
+ * Find a valid spawn position near the desired location
+ */
+static int findValidSpawn(float *outX, float *outY, float desiredX, float desiredY) {
+    if (isSafePosition(desiredX, desiredY)) {
+        *outX = desiredX;
+        *outY = desiredY;
+        return 1;
+    }
+    
+    /* Try nearby positions in expanding circles */
+    float searchRadius = 0.5f;
+    float step = 0.2f;
+    int maxAttempts = 50;
+    
+    for (int attempt = 0; attempt < maxAttempts; attempt++) {
+        for (float angle = 0; angle < 6.28f; angle += 0.785f) {  /* ~8 directions */
+            float testX = desiredX + searchRadius * cosf(angle);
+            float testY = desiredY + searchRadius * sinf(angle);
+            
+            if (isSafePosition(testX, testY)) {
+                *outX = testX;
+                *outY = testY;
+                fprintf(stderr, "Found valid spawn at (%.2f, %.2f)\n", testX, testY);
+                return 1;
+            }
+        }
+        searchRadius += step;
+    }
+    
+    return 0;  /* No valid spawn found */
+}
+
+/**
+ * Generate sprites procedurally on empty floor tiles
+ */
+static void generateSprites(Instance *instance) {
+    if (!instance) return;
+    
+    srand((unsigned)time(NULL));
+    instance->numSprites = 0;
+    
+    int spriteCount = 8 + (rand() % 5);  /* 8-12 sprites */
+    if (spriteCount > MAX_SPRITE_COUNT) spriteCount = MAX_SPRITE_COUNT;
+    
+    int attempts = 0;
+    int maxAttempts = 200;
+    
+    while (instance->numSprites < spriteCount && attempts < maxAttempts) {
+        attempts++;
+        float rx = 1.5f + (rand() % (MAP_WIDTH - 3));
+        float ry = 1.5f + (rand() % (MAP_HEIGHT - 3));
+        
+        if (isWalkablePosition(rx, ry)) {
+            instance->sprites[instance->numSprites].x = rx;
+            instance->sprites[instance->numSprites].y = ry;
+            /* Assign a random texture (simplified - won't load, but structure is valid) */
+            instance->sprites[instance->numSprites].texture = NULL;
+            instance->numSprites++;
+        }
+    }
+    
+    fprintf(stderr, "Generated %d sprites\n", instance->numSprites);
+}
+
+/**
+ * Safely check wall type at map position with bounds validation
+ */
+static int getWallType(int mapX, int mapY) {
+    if (mapX < 0 || mapX >= MAP_WIDTH || mapY < 0 || mapY >= MAP_HEIGHT) {
+        return 1;  // Treat out-of-bounds as wall
+    }
+    return map[mapY][mapX];
+}
 
 void castRays(Instance *instance, Player *player)
 {
+    if (!instance || !player) {
+        fprintf(stderr, "Error: castRays called with NULL pointer\n");
+        return;
+    }
+
     for (int x = 0; x < WINDOW_WIDTH; x++) {
         float cameraX = 2 * x / (float)WINDOW_WIDTH - 1;
         float rayDirX = player->dirX + player->planeX * cameraX;
         float rayDirY = player->dirY + player->planeY * cameraX;
+
+        /* Prevent division by zero */
+        if (fabsf(rayDirX) < MIN_DISTANCE && fabsf(rayDirY) < MIN_DISTANCE) {
+            continue;
+        }
 
         int mapX = (int)player->x;
         int mapY = (int)player->y;
@@ -44,6 +169,7 @@ void castRays(Instance *instance, Player *player)
             sideDistY = (mapY + 1.0f - player->y) * deltaDistY;
         }
 
+        /* Walk the ray through the map to find wall */
         while (!hit) {
             if (sideDistX < sideDistY) {
                 sideDistX += deltaDistX;
@@ -55,20 +181,22 @@ void castRays(Instance *instance, Player *player)
                 side = 1;
             }
 
+            /* Check bounds and hit */
             if (mapY < 0 || mapY >= MAP_HEIGHT || mapX < 0 || mapX >= MAP_WIDTH) {
                 hit = 1;
                 break;
             }
 
-            if (map[mapY][mapX] > 0) hit = 1; // wallType stored in map
+            if (map[mapY][mapX] > 0) hit = 1;
         }
 
+        /* Calculate perpendicular distance */
         if (side == 0)
             perpWallDist = (mapX - player->x + (1 - stepX) / 2.0f) / rayDirX;
         else
             perpWallDist = (mapY - player->y + (1 - stepY) / 2.0f) / rayDirY;
 
-        if (perpWallDist <= 0.0f) perpWallDist = 0.0001f;
+        if (perpWallDist <= MIN_DISTANCE) perpWallDist = MIN_DISTANCE;
 
         int lineHeight = (int)(WINDOW_HEIGHT / perpWallDist);
         int drawStart = -lineHeight / 2 + WINDOW_HEIGHT / 2;
@@ -76,15 +204,13 @@ void castRays(Instance *instance, Player *player)
         int drawEnd = lineHeight / 2 + WINDOW_HEIGHT / 2;
         if (drawEnd >= WINDOW_HEIGHT) drawEnd = WINDOW_HEIGHT - 1;
 
+        /* Validate and fetch texture */
         int texW = 0, texH = 0;
-        int wallType = map[mapY][mapX];
-        SDL_Texture *tex = NULL;
+        SDL_Texture *tex = instance->wallTexture;
 
-        if (wallType > 0 && wallType < 6)  // since 6 textures total, 0 unused
-            tex = instance->wallTextures[wallType];
-
-        if (tex)
+        if (tex) {
             SDL_QueryTexture(tex, NULL, NULL, &texW, &texH);
+        }
 
         float wallX = 0.0f;
         if (side == 0)
@@ -96,6 +222,9 @@ void castRays(Instance *instance, Player *player)
         int texX = 0;
         if (texW > 0) {
             texX = (int)(wallX * (float)texW);
+            if (texX < 0) texX = 0;
+            if (texX >= texW) texX = texW - 1;
+            
             if (side == 0 && rayDirX > 0) texX = texW - texX - 1;
             if (side == 1 && rayDirY < 0) texX = texW - texX - 1;
         }
@@ -110,7 +239,17 @@ void castRays(Instance *instance, Player *player)
 
 void drawSprites(Instance *instance, Player *player)
 {
-    // Sort sprites back to front (simple bubble sort)
+    if (!instance || !player || instance->numSprites <= 0) {
+        return;
+    }
+
+    if (instance->numSprites > MAX_SPRITE_COUNT) {
+        fprintf(stderr, "Warning: sprite count exceeds maximum (%d > %d)\n",
+                instance->numSprites, MAX_SPRITE_COUNT);
+        instance->numSprites = MAX_SPRITE_COUNT;
+    }
+
+    /* Sort sprites back to front (simple bubble sort) */
     for (int i = 0; i < instance->numSprites - 1; i++) {
         for (int j = i + 1; j < instance->numSprites; j++) {
             float di = (player->x - instance->sprites[i].x)*(player->x - instance->sprites[i].x) +
@@ -125,38 +264,70 @@ void drawSprites(Instance *instance, Player *player)
         }
     }
 
+    /* Render sprites */
     for (int i = 0; i < instance->numSprites; i++) {
+        if (!instance->sprites[i].texture) {
+            continue;
+        }
+
         float spriteX = instance->sprites[i].x - player->x;
         float spriteY = instance->sprites[i].y - player->y;
 
-        float invDet = 1.0f / (player->planeX * player->dirY - player->dirX * player->planeY);
+        float detInv = player->planeX * player->dirY - player->dirX * player->planeY;
+        if (fabsf(detInv) < MIN_DISTANCE) {
+            continue;  /* Degenerate camera plane */
+        }
+        
+        float invDet = 1.0f / detInv;
         float transformX = invDet * (player->dirY * spriteX - player->dirX * spriteY);
         float transformY = invDet * (-player->planeY * spriteX + player->planeX * spriteY);
 
-        if (transformY <= 0) continue; // sprite behind player
+        if (transformY <= MIN_DISTANCE) continue; /* Sprite behind player or too close */
 
-        int spriteScreenX = (int)((WINDOW_WIDTH / 2) * (1 + transformX / transformY));
-        int spriteHeight = abs((int)(WINDOW_HEIGHT / transformY));
+        int spriteScreenX = (int)((WINDOW_WIDTH / 2.0f) * (1.0f + transformX / transformY));
+        int spriteHeight = (int)fabs(WINDOW_HEIGHT / transformY);
+        
+        /* Clamp height to prevent overflow */
+        if (spriteHeight > WINDOW_HEIGHT * 2) spriteHeight = WINDOW_HEIGHT * 2;
+        
         int drawStartY = -spriteHeight / 2 + WINDOW_HEIGHT / 2;
         if (drawStartY < 0) drawStartY = 0;
         int drawEndY = spriteHeight / 2 + WINDOW_HEIGHT / 2;
         if (drawEndY >= WINDOW_HEIGHT) drawEndY = WINDOW_HEIGHT - 1;
 
-        int spriteWidth = abs((int)(WINDOW_HEIGHT / transformY));
+        int spriteWidth = (int)fabs(WINDOW_HEIGHT / transformY);
+        if (spriteWidth > WINDOW_WIDTH * 2) spriteWidth = WINDOW_WIDTH * 2;
+        
         int drawStartX = -spriteWidth / 2 + spriteScreenX;
         if (drawStartX < 0) drawStartX = 0;
         int drawEndX = spriteWidth / 2 + spriteScreenX;
         if (drawEndX >= WINDOW_WIDTH) drawEndX = WINDOW_WIDTH - 1;
 
-        SDL_Rect dst = { drawStartX, drawStartY, spriteWidth, spriteHeight };
-        SDL_RenderCopy(instance->renderer, instance->sprites[i].texture, NULL, &dst);
+        if (drawStartX >= WINDOW_WIDTH || drawEndX < 0 ||
+            drawStartY >= WINDOW_HEIGHT || drawEndY < 0) {
+            continue;  /* Sprite off-screen */
+        }
+
+        SDL_Rect dst = { drawStartX, drawStartY, 
+                        drawEndX - drawStartX, drawEndY - drawStartY };
+        
+        if (dst.w > 0 && dst.h > 0) {
+            SDL_RenderCopy(instance->renderer, instance->sprites[i].texture, NULL, &dst);
+        }
     }
 }
 
 void drawMap(Instance *instance, Player *player)
 {
+    if (!instance || !player || !instance->renderer) {
+        return;
+    }
+
     int miniMapSize = WINDOW_WIDTH / 6;
+    if (miniMapSize <= 0) miniMapSize = 1;
+    
     int miniMapScale = miniMapSize / MAP_WIDTH;
+    if (miniMapScale <= 0) miniMapScale = 1;
 
     for (int y = 0; y < MAP_HEIGHT; y++) {
         for (int x = 0; x < MAP_WIDTH; x++) {
@@ -187,12 +358,17 @@ void drawMap(Instance *instance, Player *player)
 
 void drawScreen(Instance *instance, Player *player)
 {
-    // Clear with ceiling color
+    if (!instance || !instance->renderer || !player) {
+        fprintf(stderr, "Error: drawScreen called with NULL pointer\n");
+        return;
+    }
+
+    /* Clear with ceiling color */
     SDL_SetRenderDrawColor(instance->renderer, 135, 206, 235, 255);
     SDL_Rect ceiling = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT / 2};
     SDL_RenderFillRect(instance->renderer, &ceiling);
 
-    // Draw floor color
+    /* Draw floor color */
     SDL_SetRenderDrawColor(instance->renderer, 169, 169, 169, 255);
     SDL_Rect floor = {0, WINDOW_HEIGHT / 2, WINDOW_WIDTH, WINDOW_HEIGHT / 2};
     SDL_RenderFillRect(instance->renderer, &floor);
@@ -206,6 +382,11 @@ void drawScreen(Instance *instance, Player *player)
 
 void movePlayer(Player *player, const Uint8 *keystate, float deltaTime)
 {
+    if (!player || !keystate) {
+        fprintf(stderr, "Error: movePlayer called with NULL pointer\n");
+        return;
+    }
+
     const float moveSpeed = deltaTime * MOVE_SPEED;
 
     float newX = player->x;
@@ -228,7 +409,8 @@ void movePlayer(Player *player, const Uint8 *keystate, float deltaTime)
         newY += player->planeY * moveSpeed;
     }
 
-    if (map[(int)newY][(int)newX] == 0) {
+    /* Use safe collision check with buffer */
+    if (isSafePosition(newX, newY)) {
         player->x = newX;
         player->y = newY;
     }
@@ -236,6 +418,11 @@ void movePlayer(Player *player, const Uint8 *keystate, float deltaTime)
 
 void rotatePlayer(Player *player, const Uint8 *keystate, float deltaTime)
 {
+    if (!player || !keystate) {
+        fprintf(stderr, "Error: rotatePlayer called with NULL pointer\n");
+        return;
+    }
+
     const float rotSpeed = deltaTime * ROT_SPEED;
 
     if (keystate[SDL_SCANCODE_LEFT]) {
@@ -259,59 +446,191 @@ void rotatePlayer(Player *player, const Uint8 *keystate, float deltaTime)
     }
 }
 
+/**
+ * Interactive map selection menu
+ */
+int selectMapInteractive(Instance *instance)
+{
+    if (!instance || !instance->renderer || !instance->window) {
+        fprintf(stderr, "Error: Invalid SDL instance\n");
+        return 0;
+    }
+
+    int selectedMap = 0;
+    int running = 1;
+    SDL_Event event;
+
+    printf("=== MAP SELECTION ===\n");
+    for (int i = 0; i < NUM_MAPS; i++) {
+        printf("%d. %s\n", i + 1, mapOptions[i].name);
+    }
+    printf("\nUse UP/DOWN arrows to select, ENTER to confirm, ESCAPE to use default\n\n");
+
+    while (running) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                return -1;
+            }
+            if (event.type == SDL_KEYDOWN) {
+                switch (event.key.keysym.sym) {
+                    case SDLK_UP:
+                        selectedMap = (selectedMap - 1 + NUM_MAPS) % NUM_MAPS;
+                        printf("Selected: %s\n", mapOptions[selectedMap].name);
+                        break;
+                    case SDLK_DOWN:
+                        selectedMap = (selectedMap + 1) % NUM_MAPS;
+                        printf("Selected: %s\n", mapOptions[selectedMap].name);
+                        break;
+                    case SDLK_RETURN:
+                        running = 0;
+                        break;
+                    case SDLK_ESCAPE:
+                        selectedMap = 0;
+                        running = 0;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        /* Draw menu screen */
+        SDL_SetRenderDrawColor(instance->renderer, 0, 0, 0, 255);
+        SDL_RenderClear(instance->renderer);
+
+        /* Simple text-based menu (rendered via SDL fill rects for visual feedback) */
+        int menuY = 100;
+        int itemHeight = 80;
+        
+        for (int i = 0; i < NUM_MAPS; i++) {
+            SDL_Rect rect = {
+                WINDOW_WIDTH / 2 - 150,
+                menuY + i * itemHeight,
+                300,
+                70
+            };
+            
+            if (i == selectedMap) {
+                SDL_SetRenderDrawColor(instance->renderer, 100, 200, 100, 255);
+            } else {
+                SDL_SetRenderDrawColor(instance->renderer, 50, 50, 50, 255);
+            }
+            SDL_RenderFillRect(instance->renderer, &rect);
+            
+            SDL_SetRenderDrawColor(instance->renderer, 200, 200, 200, 255);
+            SDL_RenderDrawRect(instance->renderer, &rect);
+        }
+
+        SDL_RenderPresent(instance->renderer);
+        SDL_Delay(16);
+    }
+
+    return selectedMap;
+}
+
 int main(int argc, char **argv) {
     (void)argc; (void)argv;
 
-    Instance instance = {0}; // zero-init
+    Instance instance = {0}; /* zero-init */
     Player player;
 
-    if (initializeSDL(&instance) != 0) return 1;
+    if (initializeSDL(&instance) != 0) {
+        fprintf(stderr, "Failed to initialize SDL\n");
+        return 1;
+    }
 
     if (loadTextures(&instance) != 0) {
+        fprintf(stderr, "Failed to load textures\n");
+        destroyTextures(&instance);
         cleanupSDL(&instance);
         return 1;
     }
 
-    // if (loadSprites(&instance) != 0) {
-    //     fprintf(stderr, "Failed to load sprites\n");
-    //     destroyTextures(&instance);
-    //     cleanupSDL(&instance);
-    //     return 1;
-    // }
+    /* Interactive map selection */
+    int selectedMapIndex = selectMapInteractive(&instance);
+    if (selectedMapIndex < 0) {
+        fprintf(stderr, "User cancelled map selection\n");
+        destroyTextures(&instance);
+        cleanupSDL(&instance);
+        return 0;
+    }
+    
+    /* Load selected map */
+    loadMapPreset(selectedMapIndex);
+    fprintf(stderr, "Loaded map: %s\n", mapOptions[selectedMapIndex].name);
 
-    player.x = 3.5f;
-    player.y = 3.5f;
+    /* Initialize player position from map spawn point */
+    player.x = mapOptions[selectedMapIndex].spawnX;
+    player.y = mapOptions[selectedMapIndex].spawnY;
     player.dirX = -1.0f;
     player.dirY = 0.0f;
     player.planeX = 0.0f;
     player.planeY = 0.66f;
 
+    /* Validate and find valid spawn position if needed */
+    if (!findValidSpawn(&player.x, &player.y, player.x, player.y)) {
+        fprintf(stderr, "Error: Could not find valid spawn position for map\n");
+        destroyTextures(&instance);
+        cleanupSDL(&instance);
+        return 1;
+    }
+
+    /* Generate sprites for this map */
+    generateSprites(&instance);
+
     SDL_Event event;
     int quit = 0;
-    Uint32 last = SDL_GetTicks();
+    Uint32 frameStart = SDL_GetTicks();
+    Uint32 lastFrame = frameStart;
 
     while (!quit) {
+        frameStart = SDL_GetTicks();
+
+        /* Handle events */
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) quit = 1;
-            else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) quit = 1;
+            if (event.type == SDL_QUIT) {
+                quit = 1;
+            } else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
+                quit = 1;
+            }
         }
 
+        /* Calculate delta time */
         Uint32 now = SDL_GetTicks();
-        float deltaTime = (now - last) / 1000.0f;
-        if (deltaTime > 0.05f) deltaTime = 0.05f;
-        last = now;
+        float deltaTime = (now - lastFrame) / 1000.0f;
+        
+        /* Clamp deltaTime to prevent large jumps (e.g., when window is dragged) */
+        if (deltaTime > MAX_DELTA_TIME) {
+            deltaTime = MAX_DELTA_TIME;
+        }
+        if (deltaTime < 0.001f) {
+            deltaTime = 0.001f;
+        }
+        lastFrame = now;
 
+        /* Get keyboard state and update player */
         const Uint8 *keystate = SDL_GetKeyboardState(NULL);
+        if (!keystate) {
+            fprintf(stderr, "Error: Failed to get keyboard state\n");
+            break;
+        }
 
         movePlayer(&player, keystate, deltaTime);
         rotatePlayer(&player, keystate, deltaTime);
 
+        /* Render frame */
         drawScreen(&instance, &player);
 
-        SDL_Delay(1);
+        /* Frame rate limiting - maintain TARGET_FPS */
+        Uint32 frameElapsed = SDL_GetTicks() - frameStart;
+        if (frameElapsed < FRAME_DELAY_MS) {
+            SDL_Delay(FRAME_DELAY_MS - frameElapsed);
+        }
     }
 
+    /* Cleanup */
     destroyTextures(&instance);
     cleanupSDL(&instance);
+    
     return 0;
 }

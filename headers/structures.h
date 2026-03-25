@@ -20,7 +20,7 @@ typedef struct Sprite {
 typedef struct Instance {
     SDL_Window *window;
     SDL_Renderer *renderer;
-    SDL_Texture *wallTextures[6]; // 0 unused
+    SDL_Texture *wallTexture;
     Sprite sprites[32];
     int numSprites;
 } Instance;
