@@ -24,6 +24,8 @@ extern int screenBuffer[WINDOW_WIDTH][WINDOW_HEIGHT];
 void drawMap(Instance *instance, Player *player);
 void castRays(Instance *instance, Player *player);
 void drawScreen(Instance *instance, Player *player);
+void drawDaySky(Instance *instance);
+void drawNightSky(Instance *instance);
 void movePlayer(Player *player, const Uint8 *keystate, float deltaTime);
 void rotatePlayer(Player *player, const Uint8 *keystate, float deltaTime);
 int selectMapInteractive(Instance *instance);

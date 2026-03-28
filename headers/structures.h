@@ -20,9 +20,10 @@ typedef struct Sprite {
 typedef struct Instance {
     SDL_Window *window;
     SDL_Renderer *renderer;
-    SDL_Texture *wallTexture;
+    SDL_Texture *wallTextures[6]; /* index 0 unused, 1-5 are wall types */
     Sprite sprites[32];
     int numSprites;
+    int isNight;  /* 1 for night, 0 for day */
 } Instance;
 
 #endif /* _STRUCTURES_H_ */

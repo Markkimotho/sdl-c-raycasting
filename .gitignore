@@ -1,5 +1,10 @@
 *~
 *.o
 .vscode
+.vscode/c_cpp_properties.json
 .idea/
 *.log
+game
+game.exe
+build.log
+raycaster-*/

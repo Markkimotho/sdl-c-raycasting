@@ -204,9 +204,14 @@ void castRays(Instance *instance, Player *player)
         int drawEnd = lineHeight / 2 + WINDOW_HEIGHT / 2;
         if (drawEnd >= WINDOW_HEIGHT) drawEnd = WINDOW_HEIGHT - 1;
 
-        /* Validate and fetch texture */
+        /* Validate and fetch texture based on wall type */
         int texW = 0, texH = 0;
-        SDL_Texture *tex = instance->wallTexture;
+        int wallType = 0;
+        if (mapY >= 0 && mapY < MAP_HEIGHT && mapX >= 0 && mapX < MAP_WIDTH)
+            wallType = map[mapY][mapX];
+        SDL_Texture *tex = NULL;
+        if (wallType > 0 && wallType < MAX_WALL_TYPES)
+            tex = instance->wallTextures[wallType];
 
         if (tex) {
             SDL_QueryTexture(tex, NULL, NULL, &texW, &texH);
@@ -317,6 +322,88 @@ void drawSprites(Instance *instance, Player *player)
     }
 }
 
+/* ===== Sky Rendering Functions ===== */
+
+/**
+ * Draw a realistic day sky with natural gradient
+ */
+void drawDaySky(Instance *instance)
+{
+    if (!instance || !instance->renderer) return;
+    
+    int height = WINDOW_HEIGHT / 2;
+    
+    /* Realistic sky gradient: deep blue at zenith fading to warm white at horizon */
+    for (int y = 0; y < height; y++) {
+        float ratio = (float)y / height;
+        /* Use smooth cubic easing for natural light falloff */
+        float eased = ratio * ratio;
+        
+        /* Zenith: deep sky blue (60, 130, 210) -> Horizon: warm haze (200, 210, 220) */
+        Uint8 r = (Uint8)(60  + 140 * eased);
+        Uint8 g = (Uint8)(130 +  80 * eased);
+        Uint8 b = (Uint8)(210 +  10 * eased);
+        
+        SDL_SetRenderDrawColor(instance->renderer, r, g, b, 255);
+        SDL_RenderDrawLine(instance->renderer, 0, y, WINDOW_WIDTH, y);
+    }
+}
+
+/**
+ * Draw a starry night sky with natural gradient
+ */
+void drawNightSky(Instance *instance)
+{
+    if (!instance || !instance->renderer) return;
+    
+    int height = WINDOW_HEIGHT / 2;
+    
+    /* Night sky gradient: dark at zenith to slightly lighter at horizon */
+    for (int y = 0; y < height; y++) {
+        float ratio = (float)y / height;
+        float eased = ratio * ratio;
+        
+        /* Zenith: near black (5, 8, 25) -> Horizon: dark blue-gray (25, 30, 55) */
+        Uint8 r = (Uint8)(5  + 20 * eased);
+        Uint8 g = (Uint8)(8  + 22 * eased);
+        Uint8 b = (Uint8)(25 + 30 * eased);
+        
+        SDL_SetRenderDrawColor(instance->renderer, r, g, b, 255);
+        SDL_RenderDrawLine(instance->renderer, 0, y, WINDOW_WIDTH, y);
+    }
+    
+    /* Draw stars */
+    srand(42);  /* Deterministic stars */
+    int numStars = 200;
+    for (int i = 0; i < numStars; i++) {
+        int starX = rand() % WINDOW_WIDTH;
+        int starY = rand() % (height - 20);  /* Stars across full sky except near horizon */
+        int brightness = 120 + (rand() % 135);
+        
+        /* Dimmer stars near horizon for realism */
+        float heightRatio = (float)starY / height;
+        brightness = (int)(brightness * (1.0f - heightRatio * 0.5f));
+        
+        SDL_SetRenderDrawColor(instance->renderer, brightness, brightness, brightness, 255);
+        SDL_RenderDrawPoint(instance->renderer, starX, starY);
+        
+        /* Occasional brighter/larger stars */
+        if (rand() % 8 == 0) {
+            SDL_RenderDrawPoint(instance->renderer, starX + 1, starY);
+            SDL_RenderDrawPoint(instance->renderer, starX, starY + 1);
+            SDL_RenderDrawPoint(instance->renderer, starX + 1, starY + 1);
+        }
+        /* Rare very bright stars with cross pattern */
+        if (rand() % 30 == 0) {
+            SDL_SetRenderDrawColor(instance->renderer, 255, 255, 240, 255);
+            SDL_RenderDrawPoint(instance->renderer, starX - 1, starY);
+            SDL_RenderDrawPoint(instance->renderer, starX + 2, starY);
+            SDL_RenderDrawPoint(instance->renderer, starX, starY - 1);
+            SDL_RenderDrawPoint(instance->renderer, starX, starY + 2);
+        }
+    }
+}
+
 void drawMap(Instance *instance, Player *player)
 {
     if (!instance || !player || !instance->renderer) {
@@ -363,13 +450,16 @@ void drawScreen(Instance *instance, Player *player)
         return;
     }
 
-    /* Clear with ceiling color */
-    SDL_SetRenderDrawColor(instance->renderer, 135, 206, 235, 255);
-    SDL_Rect ceiling = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT / 2};
-    SDL_RenderFillRect(instance->renderer, &ceiling);
+    /* Draw sky (either day or night) */
+    if (instance->isNight) {
+        drawNightSky(instance);
+    } else {
+        drawDaySky(instance);
+    }
 
     /* Draw floor color */
-    SDL_SetRenderDrawColor(instance->renderer, 169, 169, 169, 255);
+    Uint8 floorColor = instance->isNight ? 50 : 169;  /* Darker floor at night */
+    SDL_SetRenderDrawColor(instance->renderer, floorColor, floorColor, floorColor, 255);
     SDL_Rect floor = {0, WINDOW_HEIGHT / 2, WINDOW_WIDTH, WINDOW_HEIGHT / 2};
     SDL_RenderFillRect(instance->renderer, &floor);
 
@@ -525,6 +615,81 @@ int selectMapInteractive(Instance *instance)
         SDL_Delay(16);
     }
 
+    /* Now select day/night (0 = day, 1 = night) */
+    int selectedTime = 0;
+    running = 1;
+
+    printf("\n=== TIME OF DAY ===\n");
+    printf("1. Day (cloudy sky)\n");
+    printf("2. Night (starry sky)\n");
+    printf("\nUse LEFT/RIGHT arrows to select, ENTER to confirm, ESCAPE to use Day\n\n");
+
+    while (running) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                return -1;
+            }
+            if (event.type == SDL_KEYDOWN) {
+                switch (event.key.keysym.sym) {
+                    case SDLK_LEFT:
+                        selectedTime = 0;
+                        printf("Selected: Day\n");
+                        break;
+                    case SDLK_RIGHT:
+                        selectedTime = 1;
+                        printf("Selected: Night\n");
+                        break;
+                    case SDLK_RETURN:
+                        running = 0;
+                        break;
+                    case SDLK_ESCAPE:
+                        selectedTime = 0;
+                        running = 0;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        /* Draw time selection screen */
+        SDL_SetRenderDrawColor(instance->renderer, 0, 0, 0, 255);
+        SDL_RenderClear(instance->renderer);
+
+        int timeY = WINDOW_HEIGHT / 2 - 100;
+        int timeHeight = 100;
+
+        /* Day option */
+        SDL_Rect dayRect = {
+            WINDOW_WIDTH / 4 - 100,
+            timeY,
+            200,
+            timeHeight
+        };
+        SDL_SetRenderDrawColor(instance->renderer, 
+                             selectedTime == 0 ? 100 : 50, 200, 100, 255);
+        SDL_RenderFillRect(instance->renderer, &dayRect);
+        SDL_SetRenderDrawColor(instance->renderer, 200, 200, 200, 255);
+        SDL_RenderDrawRect(instance->renderer, &dayRect);
+
+        /* Night option */
+        SDL_Rect nightRect = {
+            3 * WINDOW_WIDTH / 4 - 100,
+            timeY,
+            200,
+            timeHeight
+        };
+        SDL_SetRenderDrawColor(instance->renderer, 
+                             selectedTime == 1 ? 100 : 50, 50, 150, 255);
+        SDL_RenderFillRect(instance->renderer, &nightRect);
+        SDL_SetRenderDrawColor(instance->renderer, 200, 200, 200, 255);
+        SDL_RenderDrawRect(instance->renderer, &nightRect);
+
+        SDL_RenderPresent(instance->renderer);
+        SDL_Delay(16);
+    }
+
+    instance->isNight = selectedTime;
     return selectedMap;
 }
 

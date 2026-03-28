@@ -18,6 +18,6 @@ if [ -f game ]; then
     echo "Build successful!"
     ls -lh game
 else
-    echo "Build failed"
+    echo "xxxx Build failed xxxx"
     exit 1
 fi

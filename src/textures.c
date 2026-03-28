@@ -13,27 +13,35 @@ int loadTextures(Instance *instance)
         return -1;
     }
 
-    const char *textureFile = "assets/colorstone.png";
-    
-    instance->wallTexture = NULL;
+    const char *files[MAX_WALL_TYPES] = {
+        NULL,                       /* Index 0 unused */
+        "assets/colorstone.png",
+        "assets/redbrick.png",
+        "assets/purplestone.png",
+        "assets/wood.png",
+        "assets/rocky.png"
+    };
 
-    SDL_Surface *surf = IMG_Load(textureFile);
-    if (!surf) {
-        fprintf(stderr, "Error: IMG_Load failed for '%s': %s\n", textureFile, IMG_GetError());
-        destroyTextures(instance);
-        return -1;
+    for (int i = 0; i < MAX_WALL_TYPES; i++)
+        instance->wallTextures[i] = NULL;
+
+    for (int i = 1; i < MAX_WALL_TYPES; i++) {
+        SDL_Surface *surf = IMG_Load(files[i]);
+        if (!surf) {
+            fprintf(stderr, "Error: IMG_Load failed for '%s': %s\n", files[i], IMG_GetError());
+            destroyTextures(instance);
+            return -1;
+        }
+        instance->wallTextures[i] = SDL_CreateTextureFromSurface(instance->renderer, surf);
+        SDL_FreeSurface(surf);
+        if (!instance->wallTextures[i]) {
+            fprintf(stderr, "Error: SDL_CreateTextureFromSurface failed for '%s': %s\n",
+                    files[i], SDL_GetError());
+            destroyTextures(instance);
+            return -1;
+        }
     }
 
-    instance->wallTexture = SDL_CreateTextureFromSurface(instance->renderer, surf);
-    SDL_FreeSurface(surf);
-    
-    if (!instance->wallTexture) {
-        fprintf(stderr, "Error: SDL_CreateTextureFromSurface failed for '%s': %s\n",
-                textureFile, SDL_GetError());
-        destroyTextures(instance);
-        return -1;
-    }
-    
     return 0;
 }
 
@@ -70,9 +78,11 @@ void destroyTextures(Instance *instance)
         return;
     }
 
-    if (instance->wallTexture) {
-        SDL_DestroyTexture(instance->wallTexture);
-        instance->wallTexture = NULL;
+    for (int i = 0; i < MAX_WALL_TYPES; i++) {
+        if (instance->wallTextures[i]) {
+            SDL_DestroyTexture(instance->wallTextures[i]);
+            instance->wallTextures[i] = NULL;
+        }
     }
 
     /* Destroy sprite textures */
