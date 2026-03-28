@@ -83,30 +83,34 @@ jobs:
             mingw-w64-x86_64-SDL2_image
             mingw-w64-x86_64-pkg-config
             make
+            zip
 
       - name: Build
         run: |
           make clean release
+          ls -la game*
 
       - name: Package
         run: |
           mkdir -p raycaster-windows
-          cp game.exe raycaster-windows/ 2>/dev/null || cp game raycaster-windows/raycaster.exe
+          # On MSYS2/MinGW the binary is 'game.exe'
+          if [ -f game.exe ]; then
+            cp game.exe raycaster-windows/raycaster.exe
+          else
+            cp game raycaster-windows/raycaster.exe
+          fi
           cp -r assets raycaster-windows/
           cp README.md LICENSE raycaster-windows/ 2>/dev/null || true
           rm -f raycaster-windows/assets/*.gif raycaster-windows/assets/*.jpg
-          # Bundle required DLLs
-          ldd raycaster-windows/raycaster.exe 2>/dev/null | grep mingw | awk '{print $3}' | while read dll; do
+          # Bundle required MinGW DLLs
+          ldd raycaster-windows/raycaster.exe | grep '/mingw64/' | awk '{print $3}' | while read dll; do
             cp "$dll" raycaster-windows/ 2>/dev/null || true
           done
-          # Also grab common SDL2 DLLs from known paths
-          for dll in SDL2.dll SDL2_image.dll libpng16-16.dll zlib1.dll libjpeg-8.dll libtiff-6.dll libwebp-7.dll; do
-            find /mingw64/bin -name "$dll" -exec cp {} raycaster-windows/ \; 2>/dev/null || true
-          done
+          ls -la raycaster-windows/
 
       - name: Create zip
         run: |
-          cd raycaster-windows && 7z a -tzip ../raycaster-windows-x86_64.zip . && cd ..
+          cd raycaster-windows && zip -r ../raycaster-windows-x86_64.zip . && cd ..
 
       - uses: actions/upload-artifact@v4
         with:
