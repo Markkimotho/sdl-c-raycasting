@@ -8,3 +8,5 @@ game
 game.exe
 build.log
 raycaster-*/
+
+_site/
