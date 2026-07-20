@@ -1,0 +1,225 @@
+#include "../headers/ui.h"
+
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#define UI_GLYPH_WIDTH 5
+#define UI_GLYPH_HEIGHT 7
+#define UI_GLYPH_ADVANCE 6
+#define UI_LINE_ADVANCE 8
+
+typedef struct UiGlyph {
+    char character;
+    uint8_t rows[UI_GLYPH_HEIGHT];
+} UiGlyph;
+
+static const UiGlyph uiGlyphs[] = {
+    {' ', {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
+    {'A', {0x0e, 0x11, 0x11, 0x1f, 0x11, 0x11, 0x11}},
+    {'B', {0x1e, 0x11, 0x11, 0x1e, 0x11, 0x11, 0x1e}},
+    {'C', {0x0e, 0x11, 0x10, 0x10, 0x10, 0x11, 0x0e}},
+    {'D', {0x1e, 0x11, 0x11, 0x11, 0x11, 0x11, 0x1e}},
+    {'E', {0x1f, 0x10, 0x10, 0x1e, 0x10, 0x10, 0x1f}},
+    {'F', {0x1f, 0x10, 0x10, 0x1e, 0x10, 0x10, 0x10}},
+    {'G', {0x0e, 0x11, 0x10, 0x17, 0x11, 0x11, 0x0f}},
+    {'H', {0x11, 0x11, 0x11, 0x1f, 0x11, 0x11, 0x11}},
+    {'I', {0x0e, 0x04, 0x04, 0x04, 0x04, 0x04, 0x0e}},
+    {'J', {0x07, 0x02, 0x02, 0x02, 0x12, 0x12, 0x0c}},
+    {'K', {0x11, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11}},
+    {'L', {0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1f}},
+    {'M', {0x11, 0x1b, 0x15, 0x15, 0x11, 0x11, 0x11}},
+    {'N', {0x11, 0x19, 0x15, 0x13, 0x11, 0x11, 0x11}},
+    {'O', {0x0e, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0e}},
+    {'P', {0x1e, 0x11, 0x11, 0x1e, 0x10, 0x10, 0x10}},
+    {'Q', {0x0e, 0x11, 0x11, 0x11, 0x15, 0x12, 0x0d}},
+    {'R', {0x1e, 0x11, 0x11, 0x1e, 0x14, 0x12, 0x11}},
+    {'S', {0x0f, 0x10, 0x10, 0x0e, 0x01, 0x01, 0x1e}},
+    {'T', {0x1f, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04}},
+    {'U', {0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0e}},
+    {'V', {0x11, 0x11, 0x11, 0x11, 0x11, 0x0a, 0x04}},
+    {'W', {0x11, 0x11, 0x11, 0x15, 0x15, 0x15, 0x0a}},
+    {'X', {0x11, 0x11, 0x0a, 0x04, 0x0a, 0x11, 0x11}},
+    {'Y', {0x11, 0x11, 0x0a, 0x04, 0x04, 0x04, 0x04}},
+    {'Z', {0x1f, 0x01, 0x02, 0x04, 0x08, 0x10, 0x1f}},
+    {'0', {0x0e, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0e}},
+    {'1', {0x04, 0x0c, 0x04, 0x04, 0x04, 0x04, 0x0e}},
+    {'2', {0x0e, 0x11, 0x01, 0x02, 0x04, 0x08, 0x1f}},
+    {'3', {0x1e, 0x01, 0x01, 0x0e, 0x01, 0x01, 0x1e}},
+    {'4', {0x02, 0x06, 0x0a, 0x12, 0x1f, 0x02, 0x02}},
+    {'5', {0x1f, 0x10, 0x10, 0x1e, 0x01, 0x01, 0x1e}},
+    {'6', {0x0e, 0x10, 0x10, 0x1e, 0x11, 0x11, 0x0e}},
+    {'7', {0x1f, 0x01, 0x02, 0x04, 0x08, 0x08, 0x08}},
+    {'8', {0x0e, 0x11, 0x11, 0x0e, 0x11, 0x11, 0x0e}},
+    {'9', {0x0e, 0x11, 0x11, 0x0f, 0x01, 0x01, 0x0e}},
+    {':', {0x00, 0x04, 0x04, 0x00, 0x04, 0x04, 0x00}},
+    {'.', {0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x0c}},
+    {'/', {0x01, 0x02, 0x02, 0x04, 0x08, 0x08, 0x10}},
+    {'-', {0x00, 0x00, 0x00, 0x1f, 0x00, 0x00, 0x00}},
+    {'+', {0x00, 0x04, 0x04, 0x1f, 0x04, 0x04, 0x00}},
+    {'%', {0x18, 0x19, 0x02, 0x04, 0x08, 0x13, 0x03}},
+    {'[', {0x0e, 0x08, 0x08, 0x08, 0x08, 0x08, 0x0e}},
+    {']', {0x0e, 0x02, 0x02, 0x02, 0x02, 0x02, 0x0e}},
+    {'!', {0x04, 0x04, 0x04, 0x04, 0x04, 0x00, 0x04}},
+    {'?', {0x0e, 0x11, 0x01, 0x02, 0x04, 0x00, 0x04}},
+    {'(', {0x02, 0x04, 0x08, 0x08, 0x08, 0x04, 0x02}},
+    {')', {0x08, 0x04, 0x02, 0x02, 0x02, 0x04, 0x08}},
+    {',', {0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x08}},
+    {'_', {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1f}},
+    {'=', {0x00, 0x00, 0x1f, 0x00, 0x1f, 0x00, 0x00}}
+};
+
+static char uiUppercase(char character)
+{
+    if (character >= 'a' && character <= 'z') {
+        return (char)(character - ('a' - 'A'));
+    }
+    return character;
+}
+
+static const uint8_t *uiFindGlyph(char character)
+{
+    size_t index;
+    const size_t glyphCount = sizeof(uiGlyphs) / sizeof(uiGlyphs[0]);
+
+    character = uiUppercase(character);
+    for (index = 0; index < glyphCount; ++index) {
+        if (uiGlyphs[index].character == character) {
+            return uiGlyphs[index].rows;
+        }
+    }
+
+    for (index = 0; index < glyphCount; ++index) {
+        if (uiGlyphs[index].character == '?') {
+            return uiGlyphs[index].rows;
+        }
+    }
+
+    return uiGlyphs[0].rows;
+}
+
+static int uiScaledLineWidth(int glyphCount, int scale)
+{
+    long long units;
+
+    if (glyphCount <= 0 || scale <= 0) {
+        return 0;
+    }
+
+    units = (long long)glyphCount * UI_GLYPH_ADVANCE - 1LL;
+    if (units > INT_MAX / scale) {
+        return INT_MAX;
+    }
+    return (int)(units * scale);
+}
+
+int uiTextWidth(const char *text, int scale)
+{
+    int glyphCount = 0;
+    int widest = 0;
+
+    if (!text || scale <= 0) {
+        return 0;
+    }
+
+    while (*text != '\0') {
+        if (*text == '\n') {
+            int width = uiScaledLineWidth(glyphCount, scale);
+            if (width > widest) {
+                widest = width;
+            }
+            glyphCount = 0;
+        } else if (*text != '\r') {
+            if (glyphCount < INT_MAX) {
+                ++glyphCount;
+            }
+        }
+        ++text;
+    }
+
+    {
+        int width = uiScaledLineWidth(glyphCount, scale);
+        if (width > widest) {
+            widest = width;
+        }
+    }
+
+    return widest;
+}
+
+void uiDrawText(SDL_Renderer *renderer, int x, int y, int scale,
+                const char *text, SDL_Color color)
+{
+    Uint8 oldRed;
+    Uint8 oldGreen;
+    Uint8 oldBlue;
+    Uint8 oldAlpha;
+    SDL_BlendMode oldBlendMode;
+    int cursorX = x;
+    int cursorY = y;
+
+    if (!renderer || !text || scale <= 0) {
+        return;
+    }
+
+    if (SDL_GetRenderDrawColor(renderer, &oldRed, &oldGreen, &oldBlue,
+                               &oldAlpha) != 0) {
+        oldRed = 0;
+        oldGreen = 0;
+        oldBlue = 0;
+        oldAlpha = 255;
+    }
+    if (SDL_GetRenderDrawBlendMode(renderer, &oldBlendMode) != 0) {
+        oldBlendMode = SDL_BLENDMODE_NONE;
+    }
+
+    (void)SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    (void)SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+
+    while (*text != '\0') {
+        int row;
+        const uint8_t *glyph;
+
+        if (*text == '\n') {
+            cursorX = x;
+            cursorY += UI_LINE_ADVANCE * scale;
+            ++text;
+            continue;
+        }
+        if (*text == '\r') {
+            ++text;
+            continue;
+        }
+
+        glyph = uiFindGlyph(*text);
+        for (row = 0; row < UI_GLYPH_HEIGHT; ++row) {
+            int column;
+            for (column = 0; column < UI_GLYPH_WIDTH; ++column) {
+                const uint8_t mask = (uint8_t)(1U <<
+                    (UI_GLYPH_WIDTH - 1 - column));
+                if ((glyph[row] & mask) != 0U) {
+                    SDL_Rect pixel = {
+                        cursorX + column * scale,
+                        cursorY + row * scale,
+                        scale,
+                        scale
+                    };
+                    (void)SDL_RenderFillRect(renderer, &pixel);
+                }
+            }
+        }
+
+        cursorX += UI_GLYPH_ADVANCE * scale;
+        ++text;
+    }
+
+    (void)SDL_SetRenderDrawColor(renderer, oldRed, oldGreen, oldBlue, oldAlpha);
+    (void)SDL_SetRenderDrawBlendMode(renderer, oldBlendMode);
+}
+
+void uiDrawTextCentered(SDL_Renderer *renderer, int centerX, int y, int scale,
+                        const char *text, SDL_Color color)
+{
+    uiDrawText(renderer, centerX - uiTextWidth(text, scale) / 2,
+               y, scale, text, color);
+}

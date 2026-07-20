@@ -7,6 +7,9 @@
 game
 game.exe
 build.log
+build/
+.DS_Store
+*.bmp
 raycaster-*/
 
 _site/

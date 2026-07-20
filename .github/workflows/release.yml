@@ -45,7 +45,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install sdl2 sdl2_image pkg-config
+          brew install sdl2 sdl2_image pkg-config dylibbundler
 
       - name: Build
         run: |
@@ -58,12 +58,26 @@ jobs:
           cp -r assets raycaster-macos/
           cp README.md LICENSE raycaster-macos/ 2>/dev/null || true
           rm -f raycaster-macos/assets/*.gif raycaster-macos/assets/*.jpg
-          tar czf raycaster-macos-arm64.tar.gz raycaster-macos
+          dylibbundler -od -b \
+            -x raycaster-macos/game \
+            -d raycaster-macos/lib \
+            -p @executable_path/lib/
+          find raycaster-macos/lib -type f -name '*.dylib' \
+            -exec codesign --force --sign - {} \;
+          codesign --force --sign - raycaster-macos/game
+          codesign --verify --deep --strict raycaster-macos/game
+          (
+            cd /tmp
+            SDL_VIDEODRIVER=dummy SDL_RENDER_DRIVER=software \
+              "$GITHUB_WORKSPACE/raycaster-macos/game" --smoke-test
+          )
+          ARCH=$(uname -m)
+          tar czf "raycaster-macos-${ARCH}.tar.gz" raycaster-macos
 
       - uses: actions/upload-artifact@v4
         with:
-          name: raycaster-macos-arm64
-          path: raycaster-macos-arm64.tar.gz
+          name: raycaster-macos
+          path: raycaster-macos-*.tar.gz
 
   build-windows:
     runs-on: windows-latest
@@ -131,5 +145,5 @@ jobs:
           generate_release_notes: true
           files: |
             raycaster-linux-x86_64.tar.gz
-            raycaster-macos-arm64.tar.gz
+            raycaster-macos-*.tar.gz
             raycaster-windows-x86_64.zip
